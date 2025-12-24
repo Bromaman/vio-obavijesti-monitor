@@ -1,0 +1,36 @@
+name: Monitor VIO Obavijesti
+
+on:
+  schedule:
+    - cron: "0 */6 * * *"
+  workflow_dispatch:
+
+jobs:
+  check:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout repo
+        uses: actions/checkout@v4
+
+      - name: Setup Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+
+      - name: Install dependencies
+        run: pip install -r requirements.txt
+
+      - name: Run checker
+        env:
+          EMAIL_FROM: ${{ secrets.EMAIL_FROM }}
+          EMAIL_PASSWORD: ${{ secrets.EMAIL_PASSWORD }}
+        run: python check_page.py
+
+      - name: Commit updated hash
+        run: |
+          git config user.name "github-actions"
+          git config user.email "actions@github.com"
+          git add last_hash.txt
+          git commit -m "Update page hash" || echo "No changes"
+          git push

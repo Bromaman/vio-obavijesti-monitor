@@ -2,8 +2,9 @@ name: Monitor VIO Obavijesti
 
 on:
   schedule:
-    - cron: "0 */6 * * *"
+    - cron: "0 */3 * * *"   # svakih 3 sata
   workflow_dispatch:
+
 
 jobs:
   check:

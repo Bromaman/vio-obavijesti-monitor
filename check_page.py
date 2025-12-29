@@ -1,21 +1,35 @@
 import requests
-import hashlib
 import os
 import smtplib
 from email.mime.text import MIMEText
 from datetime import datetime
 
-URL = "https://www.vio.hr/zona-za-medije/obavijesti/privremeni-prekid-u-opskrbi-vodom-zbog-radova/1833"
+# ======================
+# KONFIGURACIJA
+# ======================
 
-KEYWORD = "travno"  # tražimo case-insensitive
+PAGES = {
+    "VIO Obavijesti": "https://www.vio.hr/zona-za-medije/obavijesti/privremeni-prekid-u-opskrbi-vodom-zbog-radova/1833",
+    "HEP Struja": "https://www.hep.hr/ods/bez-struje/19?dp=zagreb&el=ZG&datum=30.12.2025",
+    "HEP Toplinarstvo": "https://www.hep.hr/toplinarstvo/krajnji-kupci/bez-toplinske-energije-1857/1857"
+}
+
+KEYWORDS = [
+    "božidara magovca",
+    "b. magovca",
+    "travno",
+    "travnog"
+]
 
 EMAIL_TO = "bozidaramagovca163@gmail.com"
 EMAIL_FROM = os.environ["EMAIL_FROM"]
 EMAIL_PASSWORD = os.environ["EMAIL_PASSWORD"]
 
-HASH_FILE = "last_hash.txt"
-STATUS_FILE = "travno_status.txt"  # pamti je li Travno već pronađeno
+STATUS_FILE = "status_found.txt"
 
+# ======================
+# POMOĆNE FUNKCIJE
+# ======================
 
 def send_email(subject, body):
     msg = MIMEText(body)
@@ -29,45 +43,24 @@ def send_email(subject, body):
         server.send_message(msg)
 
 
-def get_page_content():
+def fetch_page(url):
     headers = {"User-Agent": "Mozilla/5.0"}
-    r = requests.get(URL, headers=headers, timeout=20)
+    r = requests.get(url, headers=headers, timeout=30)
     r.raise_for_status()
-    return r.text
+    return r.text.lower()
 
+
+# ======================
+# GLAVNA LOGIKA
+# ======================
 
 def main():
-    content = get_page_content()
-    content_lower = content.lower()
-
     today = datetime.utcnow()
     weekday = today.weekday()  # Monday = 0
 
-    travno_found = KEYWORD in content_lower
+    found_matches = []
 
-    previously_found = False
-    if os.path.exists(STATUS_FILE):
-        with open(STATUS_FILE, "r") as f:
-            previously_found = f.read().strip() == "FOUND"
+    for name, url in PAGES.items():
+        content = fetch_page(url)
 
-    # ✅ SLUČAJ 1: Travno se pojavilo (i još nije javljeno)
-    if travno_found and not previously_found:
-        send_email(
-            "🚨 OBJAVLJENO: Travno",
-            f"Na stranici se pojavila riječ 'Travno'.\n\n{URL}"
-        )
-        with open(STATUS_FILE, "w") as f:
-            f.write("FOUND")
-        return
-
-    # 📅 SLUČAJ 2: NEMA Travna → ponedjeljak popodne
-    # GitHub Actions radi u UTC → 15–18 UTC ≈ popodne u HR
-    if not travno_found and weekday == 0:
-        send_email(
-            "ℹ️ Travno još nije objavljeno",
-            f"Do sada se riječ 'Travno' još nije pojavila na stranici.\n\n{URL}"
-        )
-
-
-if __name__ == "__main__":
-    main()
+        for kw in K

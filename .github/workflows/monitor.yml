@@ -2,8 +2,11 @@ name: Monitor VIO Obavijesti
 
 on:
   schedule:
-    - cron: "0 */3 * * *"   # svakih 3 sata
+    # 08:00, 11:00, 14:00, 17:00 po HR vremenu
+    # Nedjelja isključena (0 = Sunday)
+    - cron: "0 6,9,12,15 * * 1-6"
   workflow_dispatch:
+
 
 
 jobs:

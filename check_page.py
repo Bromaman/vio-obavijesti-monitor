@@ -45,9 +45,14 @@ def send_email(subject, body):
 
 def fetch_page(url):
     headers = {"User-Agent": "Mozilla/5.0"}
-    r = requests.get(url, headers=headers, timeout=30)
-    r.raise_for_status()
-    return r.text.lower()
+    try:
+        r = requests.get(url, headers=headers, timeout=30)
+        r.raise_for_status()
+        return r.text.lower()
+    except Exception as e:
+        print(f"Greška pri dohvaćanju {url}: {e}")
+        return ""  # vraća prazan string ako ne može dohvatiti
+
 
 
 # ======================

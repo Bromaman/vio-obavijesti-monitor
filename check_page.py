@@ -3,29 +3,23 @@ import hashlib
 import os
 import smtplib
 from email.mime.text import MIMEText
+from datetime import datetime
 
 URL = "https://www.vio.hr/zona-za-medije/obavijesti/privremeni-prekid-u-opskrbi-vodom-zbog-radova/1833"
+
+KEYWORD = "travno"  # tražimo case-insensitive
 
 EMAIL_TO = "bozidaramagovca163@gmail.com"
 EMAIL_FROM = os.environ["EMAIL_FROM"]
 EMAIL_PASSWORD = os.environ["EMAIL_PASSWORD"]
 
-def get_page_hash():
-    headers = {
-        "User-Agent": "Mozilla/5.0"
-    }
-    r = requests.get(URL, headers=headers, timeout=20)
-    r.raise_for_status()
-
-    text = r.text.strip()
-    return hashlib.sha256(text.encode("utf-8")).hexdigest(), text
+HASH_FILE = "last_hash.txt"
+STATUS_FILE = "travno_status.txt"  # pamti je li Travno već pronađeno
 
 
-def send_email(content):
-    msg = MIMEText(
-        f"Došlo je do promjene na stranici:\n\n{URL}\n\n---\n\n{content[:2000]}"
-    )
-    msg["Subject"] = "🔔 Promjena na VIO obavijesti"
+def send_email(subject, body):
+    msg = MIMEText(body)
+    msg["Subject"] = subject
     msg["From"] = EMAIL_FROM
     msg["To"] = EMAIL_TO
 
@@ -35,22 +29,44 @@ def send_email(content):
         server.send_message(msg)
 
 
+def get_page_content():
+    headers = {"User-Agent": "Mozilla/5.0"}
+    r = requests.get(URL, headers=headers, timeout=20)
+    r.raise_for_status()
+    return r.text
+
+
 def main():
-    new_hash, content = get_page_hash()
+    content = get_page_content()
+    content_lower = content.lower()
 
-    if os.path.exists("last_hash.txt"):
-        with open("last_hash.txt", "r") as f:
-            old_hash = f.read().strip()
-    else:
-        old_hash = ""
+    today = datetime.utcnow()
+    weekday = today.weekday()  # Monday = 0
 
-    if new_hash != old_hash:
-        send_email(content)
-        with open("last_hash.txt", "w") as f:
-            f.write(new_hash)
-        print("Promjena pronađena – mail poslan.")
-    else:
-        print("Nema promjene.")
+    travno_found = KEYWORD in content_lower
+
+    previously_found = False
+    if os.path.exists(STATUS_FILE):
+        with open(STATUS_FILE, "r") as f:
+            previously_found = f.read().strip() == "FOUND"
+
+    # ✅ SLUČAJ 1: Travno se pojavilo (i još nije javljeno)
+    if travno_found and not previously_found:
+        send_email(
+            "🚨 OBJAVLJENO: Travno",
+            f"Na stranici se pojavila riječ 'Travno'.\n\n{URL}"
+        )
+        with open(STATUS_FILE, "w") as f:
+            f.write("FOUND")
+        return
+
+    # 📅 SLUČAJ 2: NEMA Travna → ponedjeljak popodne
+    # GitHub Actions radi u UTC → 15–18 UTC ≈ popodne u HR
+    if not travno_found and weekday == 0:
+        send_email(
+            "ℹ️ Travno još nije objavljeno",
+            f"Do sada se riječ 'Travno' još nije pojavila na stranici.\n\n{URL}"
+        )
 
 
 if __name__ == "__main__":

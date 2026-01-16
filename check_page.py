@@ -26,6 +26,8 @@ EMAIL_FROM = os.environ.get("EMAIL_FROM")
 EMAIL_PASSWORD = os.environ.get("EMAIL_PASSWORD")
 
 STATUS_FILE = "status_found.txt"
+WEEKLY_STATUS_FILE = "weekly_status.txt"
+
 
 # ======================
 # POMOĆNE FUNKCIJE
@@ -117,22 +119,40 @@ def main():
 
         return
 
-    # 📅 STATUSNI MAIL – PONEDJELJAK POPODNE
+    # 📅 TJEDNI STATUSNI MAIL – SAMO JEDNOM PO TJEDNU
     if not found_matches and weekday == 0:
-        body = (
-            "Na provjerenim stranicama još uvijek NISU pronađeni pojmovi:\n"
-            "- Božidara Magovca\n"
-            "- B. Magovca\n"
-            "- Travno / Travnog\n\n"
-            "Provjerene stranice:\n"
-        )
-        for name, url in PAGES.items():
-            body += f"- {name}: {url}\n"
+        current_week = today.strftime("%Y-W%U")
+        last_sent_week = None
 
-        send_email(
-            "ℹ️ Status: još nema obavijesti za Travno / B. Magovca",
-            body
-        )
+        if os.path.exists(WEEKLY_STATUS_FILE):
+            try:
+                with open(WEEKLY_STATUS_FILE, "r") as f:
+                    last_sent_week = f.read().strip()
+            except Exception:
+                last_sent_week = None
+
+        if last_sent_week != current_week:
+            body = (
+                "Tjedni status – prošli tjedan NIJE objavljeno ništa vezano uz:\n"
+                "- Božidara Magovca\n"
+                "- B. Magovca\n"
+                "- Travno / Travnog\n\n"
+                "Provjerene stranice:\n"
+            )
+            for name, url in PAGES.items():
+                body += f"- {name}: {url}\n"
+
+            send_email(
+                "📅 Tjedni status: nema objava za Travno / B. Magovca",
+                body
+            )
+
+            try:
+                with open(WEEKLY_STATUS_FILE, "w") as f:
+                    f.write(current_week)
+            except Exception as e:
+                print("Greška pri spremanju tjednog statusa:", e)
+
 
 
 if __name__ == "__main__":

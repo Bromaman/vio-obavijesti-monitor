@@ -1,0 +1,1 @@
+WEEKLY_STATUS_FILE = "weekly_status.txt"

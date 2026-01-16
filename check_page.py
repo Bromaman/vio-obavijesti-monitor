@@ -26,6 +26,7 @@ EMAIL_FROM = os.environ.get("EMAIL_FROM")
 EMAIL_PASSWORD = os.environ.get("EMAIL_PASSWORD")
 
 STATUS_FILE = "status_found.txt"
+WEEKLY_STATUS_FILE = "weekly_status.txt"
 
 # ======================
 # POMOĆNE FUNKCIJE

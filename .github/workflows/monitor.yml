@@ -31,10 +31,10 @@ jobs:
           EMAIL_PASSWORD: ${{ secrets.EMAIL_PASSWORD }}
         run: python check_page.py
 
-      - name: Commit updated hash
+      - name: Commit updated status
         run: |
           git config user.name "github-actions"
           git config user.email "actions@github.com"
-          git add last_hash.txt
-          git commit -m "Update page hash" || echo "No changes"
+          git add last_hash.txt weekly_status.txt status_found.txt
+          git commit -m "Update status files" || echo "No changes"
           git push

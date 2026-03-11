@@ -121,7 +121,7 @@ def main():
 
     # 📅 TJEDNI STATUSNI MAIL – SAMO JEDNOM PO TJEDNU
     if not found_matches and weekday == 0:
-        current_week = today.strftime("%Y-W%U")
+        current_week = today.strftime("%Y-W%W")
         last_sent_week = None
 
         if os.path.exists(WEEKLY_STATUS_FILE):
